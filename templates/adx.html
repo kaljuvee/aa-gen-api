@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Text to SQL Query Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .schema-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .result-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Text to SQL Query Generator</h1>
+        
+        <!-- Schema View -->
+        <div class="mb-4">
+            <button id="viewSchema" class="btn btn-secondary">View Database Schema</button>
+            <div id="schemaContent" class="schema-container mt-3" style="display: none;"></div>
+        </div>
+
+        <!-- Query Input -->
+        <div class="mb-4">
+            <label for="naturalQuery" class="form-label">Enter your query in natural language:</label>
+            <textarea id="naturalQuery" class="form-control" rows="3"></textarea>
+            <button id="generateSQL" class="btn btn-primary mt-2">Generate SQL</button>
+        </div>
+
+        <!-- Generated SQL -->
+        <div class="mb-4">
+            <label for="generatedSQL" class="form-label">Generated SQL Query:</label>
+            <textarea id="generatedSQL" class="form-control" rows="4" readonly></textarea>
+        </div>
+
+        <!-- SQL Execution -->
+        <div class="mb-4">
+            <label for="sqlQuery" class="form-label">SQL Query to Execute:</label>
+            <textarea id="sqlQuery" class="form-control" rows="4"></textarea>
+            <button id="executeSQL" class="btn btn-success mt-2">Execute SQL</button>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="result-container"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // View Schema
+            $('#viewSchema').click(function() {
+                $.get('/api/schema', function(data) {
+                    let schemaHtml = '';
+                    data.forEach(table => {
+                        schemaHtml += `<h4>${table.name}</h4>`;
+                        table.columns.forEach(col => {
+                            schemaHtml += `<p><strong>${col.name}</strong>: ${col.type}</p>`;
+                        });
+                        schemaHtml += '<hr>';
+                    });
+                    $('#schemaContent').html(schemaHtml).show();
+                });
+            });
+
+            // Generate SQL
+            $('#generateSQL').click(function() {
+                const query = $('#naturalQuery').val();
+                $.post('/api/generate-sql', {query: query}, function(data) {
+                    $('#generatedSQL').val(data.sql);
+                    $('#sqlQuery').val(data.sql);
+                });
+            });
+
+            // Execute SQL
+            $('#executeSQL').click(function() {
+                const sql = $('#sqlQuery').val();
+                $.post('/api/execute-sql', {sql: sql}, function(data) {
+                    let resultHtml = '<table class="table table-striped">';
+                    
+                    // Headers
+                    if (data.length > 0) {
+                        resultHtml += '<thead><tr>';
+                        Object.keys(data[0]).forEach(key => {
+                            resultHtml += `<th>${key}</th>`;
+                        });
+                        resultHtml += '</tr></thead>';
+                    }
+
+                    // Data
+                    resultHtml += '<tbody>';
+                    data.forEach(row => {
+                        resultHtml += '<tr>';
+                        Object.values(row).forEach(value => {
+                            resultHtml += `<td>${value}</td>`;
+                        });
+                        resultHtml += '</tr>';
+                    });
+                    resultHtml += '</tbody></table>';
+                    
+                    $('#results').html(resultHtml);
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI API Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .endpoint {
+            background-color: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .try-it {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+        select, textarea, button {
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <nav style="background-color: #f8f9fa; padding: 1rem; margin-bottom: 2rem;">
+        <a href="/" style="margin-right: 20px; text-decoration: none; color: #007bff;">Home</a>
+        <a href="/adx" style="text-decoration: none; color: #007bff;">ADX Text-to-SQL</a>
+    </nav>
+
+    <h1>GenAI API Documentation</h1>
+    
+    <div class="endpoint">
+        <h2>Chat Endpoint</h2>
+        <p><strong>URL:</strong> /chat</p>
+        <p><strong>Method:</strong> POST</p>
+        <p><strong>Description:</strong> Send questions and receive AI-powered responses based on the document context.</p>
+        
+        <h3>Request Parameters:</h3>
+        <pre>
+{
+    "question": "string (required)",
+    "user_id": "string (optional)",
+    "session_id": "string (optional)",
+    "controller_id": "string (optional)"
+}
+        </pre>
+
+        <h3>Response Format:</h3>
+        <pre>
+{
+    "answer": "string",
+    "user_id": "string",
+    "session_id": "string",
+    "controller_id": "string"
+}
+        </pre>
+
+        <h3>Available Controllers:</h3>
+        <ul>
+        {% for controller_id, name in controllers.items() %}
+            <li><strong>{{ controller_id }}</strong>: {{ name }}</li>
+        {% endfor %}
+        </ul>
+
+        <h3>Example Usage:</h3>
+        <pre>
+fetch('/chat', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        question: "What are the main components?",
+        user_id: "user123",
+        session_id: "session456",
+        controller_id: "apc-j140-bin-005c"
+    })
+})
+.then(response => response.json())
+.then(data => console.log(data));
+        </pre>
+    </div>
+
+    <div class="endpoint">
+        <h2>ADX Text-to-SQL Endpoints</h2>
+        
+        <h3>1. Get Database Schema</h3>
+        <p><strong>URL:</strong> /api/schema</p>
+        <p><strong>Method:</strong> GET</p>
+        <p><strong>Description:</strong> Retrieves the database schema including tables and columns.</p>
+        
+        <h3>Response Format:</h3>
+        <pre>
+[
+    {
+        "name": "table_name",
+        "columns": [
+            {
+                "name": "column_name",
+                "type": "column_type"
+            }
+        ]
+    }
+]
+        </pre>
+
+        <h3>2. Generate SQL Query</h3>
+        <p><strong>URL:</strong> /api/generate-sql</p>
+        <p><strong>Method:</strong> POST</p>
+        <p><strong>Description:</strong> Converts natural language to SQL query.</p>
+        
+        <h3>Request Parameters:</h3>
+        <pre>
+{
+    "query": "string (required) - Your natural language query"
+}
+        </pre>
+
+        <h3>Response Format:</h3>
+        <pre>
+{
+    "sql": "string - Generated SQL query"
+}
+        </pre>
+
+        <h3>3. Execute SQL Query</h3>
+        <p><strong>URL:</strong> /api/execute-sql</p>
+        <p><strong>Method:</strong> POST</p>
+        <p><strong>Description:</strong> Executes a SQL query and returns the results.</p>
+        
+        <h3>Request Parameters:</h3>
+        <pre>
+{
+    "sql": "string (required) - SQL query to execute"
+}
+        </pre>
+
+        <h3>Response Format:</h3>
+        <pre>
+[
+    {
+        "column1": "value1",
+        "column2": "value2"
+        // ... query results as array of objects
+    }
+]
+        </pre>
+
+        <h3>Example Usage:</h3>
+        <pre>
+// Generate SQL from natural language
+fetch('/api/generate-sql', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: 'query=give me first hundred records in adx_tag_list table'
+})
+.then(response => response.json())
+.then(data => console.log(data.sql));
+
+// Execute SQL query
+fetch('/api/execute-sql', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: 'sql=SELECT TOP 100 * FROM adx_tag_list'
+})
+.then(response => response.json())
+.then(data => console.log(data));
+        </pre>
+
+        <p><strong>Note:</strong> You can also access the interactive interface at <a href="/adx">/adx</a> to try out these endpoints with a user-friendly UI.</p>
+    </div>
+
+    <div class="try-it">
+        <h2>Try it out</h2>
+        <div>
+            <label for="controller">Select Controller:</label>
+            <select id="controller">
+                <option value="">Default Controller</option>
+                {% for controller_id, name in controllers.items() %}
+                <option value="{{ controller_id }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <textarea id="question" rows="4" style="width: 100%" placeholder="Enter your question here..."></textarea>
+        <button onclick="askQuestion()">Send Question</button>
+        <div id="response" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        function askQuestion() {
+            const question = document.getElementById('question').value;
+            const controller = document.getElementById('controller').value;
+            const responseDiv = document.getElementById('response');
+            
+            const payload = {
+                question: question
+            };
+
+            if (controller) {
+                payload.controller_id = controller;
+            }
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    responseDiv.innerHTML = `<strong>Error:</strong><br>${data.error}`;
+                } else {
+                    responseDiv.innerHTML = `<strong>Response:</strong><br>${data.answer}`;
+                }
+            })
+            .catch(error => {
+                responseDiv.innerHTML = `<strong>Error:</strong><br>${error}`;
+            });
+        }
+    </script>
+</body>
+</html>
